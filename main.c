@@ -1,4 +1,91 @@
-  else if(strcmp(cmd,"clsc")==0) system("cls");
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+// generale
+void clearChaine(char *src);
+//------------DATA EMpreteurs--------------------
+struct Emprunteur{
+
+    char nom[20];
+    char prenom[20];
+};
+void AjoutEmprunteur(struct Emprunteur *lien,int *pos);
+void AfficheEmpreteur(struct Emprunteur *lien,int fond);
+int RechercheEmprunteur(struct Emprunteur *lien,int pos);
+void supprimerEmprunteur(struct Emprunteur *lien,int pos);
+int backUpEmprunteur(struct Emprunteur *lien,int pos);
+int restoreEmprunteur(struct Emprunteur *lien,int *pos);
+
+//------------DATA Emprunt--------------------
+struct Emprunt{
+
+    int IDLivre;
+    int IDEmp;
+};
+
+//-------------DATA sur les livres
+struct Livre{
+
+    char titre[20];
+    char auteur[20];
+};
+void AjoutLivre(struct Livre *lien,int *pos);
+void AfficheLivres(struct Livre *lien,int fond);
+int RechercheLivre(struct Livre *lien,int pos);
+void supprimerLivre(struct Livre *lien,int pos);
+int backUpLivre(struct Livre *lien,int pos);
+int restoreLivres(struct Livre *lien,int *pos);
+//----------------------------------------------------
+int main()
+{
+    struct Emprunt stockEmp[100];
+    struct Emprunt *ptrEmp;
+    ptrEmp = stockEmp;
+    int posEmp = 0;
+    //--------------
+    struct Emprunteur stockEm[100];
+    struct Emprunteur *ptrEm;
+    int posEm = 0;
+    ptrEm = stockEm;
+    //creation des varables livre
+    struct Livre stock[100];
+    struct Livre *ptr;
+    ptr = stock;
+    int last = 0;
+    // initialisation
+    puts("  INITIALISATION DE LA BIBLIOTHEQUE");
+    int r = restoreLivres(ptr,&last);
+    if(r==0)puts("   #[erreure] Impossible de recupere les donnees de livre");
+    else puts("   #[succes] Initialisation Livre");
+    r = restoreEmprunteur(ptrEm,&posEm);
+    if(r==0)puts("   #[erreure] Impossible de recupere les donnees des EMprunteurs");
+    else puts("   #[succes] Initialisation Emprunteurs");
+    r = restoreEmprunts(ptrEmp,&posEmp);
+    if(r==0)puts("   #[erreure] Impossible de recupere les donnees des EMprunteurs");
+    else puts("   #[succes] Initialisation Emprunts");
+    puts("  INITIALISATION DE LA BIBLIOTHEQUE FAITE");
+    puts("  taper help pour afficher de l'aide");
+    //Fonction principale
+    int sortie = 0;
+    char cmd[5];
+    while(sortie ==0){
+
+        printf("bib@ $ ");
+        fgets(cmd,5,stdin);
+        fflush(stdin);
+        if(strcmp(cmd,"lvnv")==0) AjoutLivre(&stock,&last);
+        else if(strcmp(cmd,"lvls")==0) AfficheLivres(&stock,last);
+        else if(strcmp(cmd,"lvsr")==0) RechercheLivre(&stock,last);
+        else if(strcmp(cmd,"lvdl")==0) supprimerLivre(&stock,last);
+        else if(strcmp(cmd,"amnv")==0) AjoutEmprunteur(&stockEm,&posEm);
+        else if(strcmp(cmd,"amls")==0) AfficheEmpreteur(&stockEm,posEm);
+        else if(strcmp(cmd,"amsr")==0) RechercheEmprunteur(&stockEm,posEm);
+        else if(strcmp(cmd,"amdl")==0) supprimerEmprunteur(&stockEm,posEm);
+        else if(strcmp(cmd,"emnv")==0) AjoutEmprunt(&stockEmp,&stock,&stockEm,&posEmp,last,posEm);
+        else if(strcmp(cmd,"emls")==0) AfficheEmprunt(&stockEmp,&stock,&stockEm,posEmp);
+        else if(strcmp(cmd,"emsr")==0) rechercheEmprunt(&stockEmp,&stock,&stockEm,posEmp);
+        else if(strcmp(cmd,"help")==0) help();
+        else if(strcmp(cmd,"clsc")==0) system("cls");
         else if(strcmp(cmd,"exit")==0) {
             backUpLivre(&stock,last);
             backUpEmprunteur(&stockEm,posEm);
@@ -102,21 +189,21 @@ void help(){
     puts("    clsc -> Effacer l'ecran");
     puts(" ");
     puts("  COMMANDE SUR LIVRE");
-    puts("    lvnv -> AJoutet un Livre au stock");
-    puts("    lvls -> Afficher les livre disponibles");
-    puts("    lvsr -> Rechrecher un un Livre dans le stock");
-    puts("    lvdl -> Supprimer un Livre du stock");
+    puts("    lvnv -> Ajouter un livre ");
+    puts("    lvls -> Afficher tous les livres disponibles");
+    puts("    lvsr -> Rechercher un livre ");
+    puts("    lvdl -> Supprimer un livre ");
     puts(" ");
     puts("  COMMANDE SUR EMPRUNTEUR");
-    puts("    amnv -> AJouter un Emprunteur");
-    puts("    amls -> Afficher les Emprunteurs");
-    puts("    amsr -> Rechrecher un Emprunteur");
-    puts("    amdl -> Supprimer un Emprunteur");
+    puts("    amnv -> Ajouter un emprunteur");
+    puts("    amls -> Afficher tous les emprunteurs");
+    puts("    amsr -> Rechercher un emprunteur");
+    puts("    amdl -> Supprimer un emprunteur");
     puts(" ");
     puts("  COMMANDE SUR EMPRUNTS");
-    puts("    emnv -> AJouter un Emprunt");
-    puts("    emls -> Afficher les Emprunts");
-    puts("    emsr -> Rechrecher un Emprunt");
+    puts("    emnv -> Ajouter un emprunt");
+    puts("    emls -> Afficher tous les emprunts");
+    puts("    emsr -> Rechercher un emprunt");
     puts(" ");
 }
 
@@ -290,150 +377,3 @@ int restoreLivres(struct Livre *lien,int *pos){
     fclose(livre_backup);
     return 1;
 }
-
-
-
-//------------------EMPRUNTEUR---------------------------------------------------------
-void AjoutEmprunteur(struct Emprunteur *lien,int *pos){
-
-    int indice = *pos;
-    char nom[20];
-    char prenom[20];
-
-    printf("   @ Nom de l'Emprunteur ~ ");
-    fgets(nom,20,stdin);
-    fflush(stdin);
-    printf("   @ Prenom de l'Emprunteur ~ ");
-    fgets(prenom,20,stdin);
-    fflush(stdin);
-
-    // on lave les chaine de \n
-    clearChaine(nom);
-    clearChaine(prenom);
-
-    printf("   Ajout d'un Emprunteur  \n   Nom:%s , Prenom :%s\n",nom,prenom);
-    puts("   #[succes] Insertion faite");
-    strcpy((lien+indice)->nom,nom);
-    strcpy((lien+indice)->prenom,prenom);
-    (*pos)++;
-}
-void AfficheEmpreteur(struct Emprunteur *lien,int fond){
-
-    puts("  LISTE D'EMPRUNTEUR ");
-    puts("  N:[ NOM , PRENOM ]");
-    for(int i=0;i<fond;i++){
-
-        if(strcmp(lien->nom,"@")!=0 && strcmp(lien->prenom,"@") != 0){
-
-            printf("  %d:[ %s , %s ]\n",(i+1),lien->nom,lien->prenom);
-        }
-        lien++;
-    }
-}
-int RechercheEmprunteur(struct Emprunteur *lien,int pos){
-
-    int founded = -1;
-    char nom[20];
-    puts("  RECHERCHE D'UN EMPRUNTEUR");
-    printf("   @ Nom  ~ ");
-    fgets(nom,20,stdin);
-    fflush(stdin);
-    clearChaine(nom);
-
-    for(int i=0;i<pos;i++){
-
-        if(strcmp(lien->nom,nom)==0){
-
-            puts("  #[succes] EMPRUNTEUR DISPONIBLE");
-            printf("  Nom:%s , Prenom:%s\n",lien->nom,lien->prenom);
-            founded = i;
-            break;
-        }else lien++;
-    }
-
-    if(founded == (-1)) puts("  #[erreure] EMPRUNTEUR NON DISPONNIBLE");
-
-    return founded;
-}
-void supprimerEmprunteur(struct Emprunteur *lien,int pos){
-
-
-    int founded = 0;
-    char nom[20];
-    puts("  SUPPRESSION D'UN EMPRUNTEUR");
-    printf("   @ nom ~ ");
-    fgets(nom,20,stdin);
-    fflush(stdin);
-    clearChaine(nom);
-    for(int i=0;i<pos;i++){
-
-        if(strcmp(lien->nom,nom)==0){
-
-            puts("  #[succes] EMPRUNTEUR A SUPPRIMER");
-            printf("  Nom:%s , Prenom:%s\n",lien->nom,lien->prenom);
-            strcpy(lien->nom,"@");
-            strcpy(lien->prenom,"@");
-            founded = 1;
-            break;
-        }else lien++;
-    }
-
-    if(founded == 0){
-
-        puts("  #[erreure] EMPRUNTEUR NON DISPONNIBLE");
-    }
-}
-int backUpEmprunteur(struct Emprunteur *lien,int pos){
-
-    FILE *emprunteur_backup=fopen("emprunteur_db.txt","w+");
-    if(!emprunteur_backup){
-
-        printf("Impossible d'ouvrir le fichier de suavegarde\n");
-        return 0;
-    }
-    for(int i=0;i<pos;i++){
-
-        if(strcmp(lien->nom,"@")==0 && strcmp(lien->prenom,"@") == 0) {
-
-            lien++;
-            continue;
-        }
-        fputs(lien->nom,emprunteur_backup);
-        fputs(";",emprunteur_backup);
-        fputs(lien->prenom,emprunteur_backup);
-        fputs("\n",emprunteur_backup);
-        lien++;
-    }
-    fclose(emprunteur_backup);
-    return 1;
-}
-int restoreEmprunteur(struct Emprunteur *lien,int *pos){
-
-    FILE *emprunteur_db=fopen("emprunteur_db.txt","r");
-    if(!emprunteur_db){
-
-        printf("Impossible d'ouvrir le fichier de sauvegarde\n");
-        return 0;
-    }
-    char chaine[40];
-    while(fgets(chaine,40,emprunteur_db)!=NULL){
-
-        printf("chaine =->%s",chaine);
-        int seprator = getSeparator(chaine);
-        copyPart(1,lien->nom,chaine,seprator);
-        copyPart(2,lien->prenom,chaine,seprator);
-        (*pos)++;
-        lien++;
-    }
-    fclose(emprunteur_db);
-    return 1;
-}
-
-
-
-//------------------EMPRUNT---------------------------------------------------------
-void AjoutEmprunt(struct Emprunt *lien,struct Livre *stock,struct Emprunteur *stockEm,int *posEm,int posLivre,int posAm){
-
-    int indice = *posEm;
-    int LivreId = RechercheLivre(stock,posLivre);
-    int EmprunteurID = RechercheEmprunteur(stockEm,posAm);
